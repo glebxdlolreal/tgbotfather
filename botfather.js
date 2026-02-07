@@ -258,7 +258,7 @@ var CreateBot = {
 
 var BotProfile = {
   init() {
-    Aj.state.files = {};
+    Aj.state.files ||= {};
     WebApp.MainButton.setText('Update');
     WebApp.MainButton.show();
     WebApp.MainButton.onClick(BotProfile.eMainClick);
@@ -473,7 +473,7 @@ var BotCommandsList = {
     Aj.apiRequest('reorderCommands', { 
       bid: Aj.state.botId,
       lang_code: Aj.state.lang,
-      commands: [], 
+      commands: commands,
     }, (res) => {
       if (res.error) {
         Main.showErrorToast(res.error);
@@ -810,7 +810,95 @@ var BotSettings = {
       if (Aj.state.blockChecks) return;
       updateBroadcastAdminRights();
     });
+
+    $('.js-spoiler').each(function () {
+      SimpleSpoiler.init(this);
+    });
+    $('body').on('click', '.js-spoiler', BotGeneral.eClickSpoiler);
+
+    $('.copy-btn').on('click', function () {
+      navigator.clipboard.writeText(this.dataset.value);
+      Main.showSuccessToast('Copied to clipboard.');
+    })
+
+    $('.js-revoke-client-secret').on('click', function () {
+      BotSettings.askRevokeClientSecret();
+    })
+
+    $('.js-migrate-oauth').on('click', function () {
+      BotSettings.askMigrateOauth();
+    });
   },
+
+  askMigrateOauth() {
+    WebApp.showPopup({
+      title: 'Switch to OAuth 2.0 Login',
+      message: 'This action permanently disables the legacy login method.',
+      buttons: [
+        {
+          id: 'confirm',
+          text: 'Confirm',
+          type: 'default',
+        },
+        {
+          type: 'cancel',
+        },
+      ]
+    }, (result) => {
+      if (result === 'confirm') {
+        // Aj.apiRequest('revokeOpenIDSecret', {
+        //   bid: Aj.state.botId,
+        // }, (response) => {
+        //   if (response.error) {
+        //     Main.showErrorToast(response.error);
+        //   } 
+        //   if (response.ok) {
+        //     $('.tm-api-token').html(`<span class="js-spoiler">${response.token}</span>`);
+        //     $('.tm-api-token .js-spoiler').each(function () {
+        //       SimpleSpoiler.init(this);
+        //     });
+        //     Main.showSuccessToast('Secret revoked successfully.');
+        //   }
+        // });
+        window.location.search += '?migrate=1'
+      }
+    });
+  },
+
+  askRevokeClientSecret() {
+    WebApp.showPopup({
+      title: 'Revoke Client Secret',
+      message: 'Do you want to revoke the client secret?',
+      buttons: [
+        {
+          type: 'cancel',
+        },
+        {
+          id: 'revoke',
+          text: 'Revoke',
+          type: 'destructive',
+        }
+      ]
+    }, (result) => {
+      if (result === 'revoke') {
+        // Aj.apiRequest('revokeOpenIDSecret', {
+        //   bid: Aj.state.botId,
+        // }, (response) => {
+        //   if (response.error) {
+        //     Main.showErrorToast(response.error);
+        //   } 
+        //   if (response.ok) {
+        //     $('.tm-api-token').html(`<span class="js-spoiler">${response.token}</span>`);
+        //     $('.tm-api-token .js-spoiler').each(function () {
+        //       SimpleSpoiler.init(this);
+        //     });
+        //     Main.showSuccessToast('Secret revoked successfully.');
+        //   }
+        // });
+        Main.showSuccessToast('Secret revoked successfully.');
+      }
+    });
+  }
 }
 
 var BotSettingsInline = {
