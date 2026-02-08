@@ -724,7 +724,7 @@ var BotSettings = {
         if (res.error) {
           $('.hint-text[data-for=web_login]').text('Domain is invalid').toggleClass('hint-text-error', true);
         } else {
-          $('.hint-text[data-for=web_login]').text('');
+          $('.hint-text[data-for=web_login]').text('').toggleClass('hint-text-error', false);
         }
       })
     }
@@ -814,11 +814,11 @@ var BotSettings = {
     $('.js-spoiler').each(function () {
       SimpleSpoiler.init(this);
     });
-    $('body').on('click', '.js-spoiler', BotGeneral.eClickSpoiler);
+    $('body').on('click', '.js-spoiler', BotSettings.eClickSpoiler);
 
     $('.copy-btn').on('click', function () {
       navigator.clipboard.writeText(this.dataset.value);
-      Main.showSuccessToast('Copied to clipboard.');
+      Main.showSuccessToast(l('WEB_GENERIC_COPY_SUCCESS'));
     })
 
     $('.js-revoke-client-secret').on('click', function () {
@@ -830,14 +830,19 @@ var BotSettings = {
     });
   },
 
+  eClickSpoiler() {
+    SimpleSpoiler.destroy(this);
+    this.classList.add('js-spoiler-revealed');
+  },
+
   askMigrateOauth() {
     WebApp.showPopup({
-      title: 'Switch to OAuth 2.0 Login',
-      message: 'This action permanently disables the legacy login method.',
+      title: l('WEB_LOGIN_MIGRATE_TITLE'),
+      message: l('WEB_LOGIN_MIGRATE_TEXT'),
       buttons: [
         {
           id: 'confirm',
-          text: 'Confirm',
+          text: l('WEB_LOGIN_MIGRATE_CONFIRM_BTN'),
           type: 'default',
         },
         {
@@ -846,56 +851,52 @@ var BotSettings = {
       ]
     }, (result) => {
       if (result === 'confirm') {
-        // Aj.apiRequest('revokeOpenIDSecret', {
-        //   bid: Aj.state.botId,
-        // }, (response) => {
-        //   if (response.error) {
-        //     Main.showErrorToast(response.error);
-        //   } 
-        //   if (response.ok) {
-        //     $('.tm-api-token').html(`<span class="js-spoiler">${response.token}</span>`);
-        //     $('.tm-api-token .js-spoiler').each(function () {
-        //       SimpleSpoiler.init(this);
-        //     });
-        //     Main.showSuccessToast('Secret revoked successfully.');
-        //   }
-        // });
-        window.location.search += '?migrate=1'
+        Aj.apiRequest('revokeOIDCClientSecret', {
+          bid: Aj.state.botId,
+        }, (response) => {
+          if (response.error) {
+            Main.showErrorToast(response.error);
+          } 
+          if (response.ok) {
+            window.location.search += '?migrate=1';
+          }
+        });
       }
     });
   },
 
   askRevokeClientSecret() {
     WebApp.showPopup({
-      title: 'Revoke Client Secret',
-      message: 'Do you want to revoke the client secret?',
+      title: l('WEB_CLIENT_SECRET_REVOKE_TITLE'),
+      message: l('WEB_CLIENT_SECRET_REVOKE_TEXT'),
       buttons: [
         {
           type: 'cancel',
         },
         {
           id: 'revoke',
-          text: 'Revoke',
+          text: l('WEB_API_TOKEN_REVOKE_BTN'),
           type: 'destructive',
         }
       ]
     }, (result) => {
       if (result === 'revoke') {
-        // Aj.apiRequest('revokeOpenIDSecret', {
-        //   bid: Aj.state.botId,
-        // }, (response) => {
-        //   if (response.error) {
-        //     Main.showErrorToast(response.error);
-        //   } 
-        //   if (response.ok) {
-        //     $('.tm-api-token').html(`<span class="js-spoiler">${response.token}</span>`);
-        //     $('.tm-api-token .js-spoiler').each(function () {
-        //       SimpleSpoiler.init(this);
-        //     });
-        //     Main.showSuccessToast('Secret revoked successfully.');
-        //   }
-        // });
-        Main.showSuccessToast('Secret revoked successfully.');
+        Aj.apiRequest('revokeOIDCClientSecret', {
+          bid: Aj.state.botId,
+        }, (response) => {
+          if (response.error) {
+            Main.showErrorToast(response.error);
+          } 
+          if (response.ok) {
+            $('.js-spoiler.js-secret-val').html(response.token);
+            $('.copy-btn.js-secret-val').data('value', response.token);
+
+            $('.js-spoiler.js-secret-val').each(function () {
+              SimpleSpoiler.init(this);
+            });
+            Main.showSuccessToast(l('WEB_CLIENT_SECRET_REVOKE_SUCCESS'));
+          }
+        });
       }
     });
   }
